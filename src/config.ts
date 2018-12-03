@@ -24,6 +24,6 @@ const buildType = getBuildType(process.env)
 export const config = {
   buildType,
   logLevel: 4,
-  port: buildType === BuildType.Production ? 7331 : 7337,
+  port: buildType === BuildType.Production ? 7341 : 7343,
   prettyPrint: true
 }

@@ -5,14 +5,15 @@ import { config } from './config'
 
 interface LogData {
   data: any
+  dbCommand: string
   errorMessage: string
   errorStack: string
   host: string
-  input: string
+  zip: string
   method: string
-  query: string
   remoteAddress: string
   responseTime: number
+  rowsReturned: number
   statusCode: number
   url: string
   userAgent: string
@@ -54,18 +55,14 @@ export const requestLoggerMiddleware = (
 ) => async (ctx: Koa.Context, next: () => Promise<any>) => {
   ctx.state.logger = logger
   ctx.state.dbClient = dbClient
-  const start = new Date().getMilliseconds()
+  const start = Date.now()
   const logData: Partial<LogData> = {
-    host: ctx.headers.host,
-    input:
-      ctx.method === 'POST' &&
-      ctx.request.body &&
-      (ctx.request.body as any).input,
     method: ctx.method,
-    query: ctx.query,
     remoteAddress: ctx.request.ip,
     url: ctx.url,
-    userAgent: ctx.headers['user-agent']
+    userAgent: ctx.headers['user-agent'],
+    zip:
+      ctx.method === 'POST' && ctx.request.body && (ctx.request.body as any).zip
   }
 
   let errorThrown: any = null
@@ -82,7 +79,9 @@ export const requestLoggerMiddleware = (
     }
   }
 
-  logData.responseTime = new Date().getMilliseconds() - start
+  logData.responseTime = Date.now() - start
+  logData.rowsReturned = ctx.state.rowsReturned
+  logData.dbCommand = ctx.state.dbCommand
   outputLog(logger, logData, errorThrown)
 
   if (errorThrown) {
@@ -94,7 +93,7 @@ function outputLog(logger: Logger, data: Partial<LogData>, thrownError: any) {
   if (config.prettyPrint) {
     let annotation = ''
     if (data.url === '/' && data.method === 'POST') {
-      annotation = `| "${data.input}" |`
+      annotation = `| zip: ${data.zip} | ${data.rowsReturned} rows returned`
     }
     logger.info(
       `${data.statusCode} ${data.method} ${

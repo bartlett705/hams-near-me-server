@@ -38,39 +38,61 @@ router.post('/', async (ctx: Koa.Context) => {
     return
   }
 
+  if (Number(zip) === 0) {
+    ctx.status = 422
+    ctx.body =
+      "Sorry, you can't search for ULS records with missing zips right now. Too many rows ☹"
+    return
+  }
+
   logger.debug('Got a post')
-  const result = await queryDB(
-    logger,
-    dbClient,
-    `SELECT call, name FROM hammers
+  const query = `SELECT call, name FROM hammers
     WHERE zip = ${zip} OR zip > ${zip}0000 AND zip < ${+zip + 1}0000;`
-  )
+
+  // paranoia?
+  if (query.indexOf(';') < 78) {
+    ctx.status = 422
+    ctx.body = 'Notsure if sql injection...'
+    return
+  }
+  const result = await queryDB(logger, dbClient, query)
 
   if (result && result.rows) {
     const sortedRows = result.rows
       // Sort by first two chars
       .sort((recordA, recordB) => {
         const firstLetterComp =
-          recordA.name.charCodeAt(0) - recordB.name.charCodeAt(0)
+          (recordA.name && recordA.name.charCodeAt(0)) ||
+          (0 - recordB.name && recordB.name.charCodeAt(0)) ||
+          0
         return firstLetterComp === 0
-          ? recordA.name.charCodeAt(1) - recordB.name.charCodeAt(1)
+          ? (recordA.name && recordA.name.charCodeAt(1)) ||
+              (0 - recordB.name && recordB.name.charCodeAt(1)) ||
+              0
           : firstLetterComp
       })
       // Title case names, transform single callsign into array of callsigns.
       .map((record) => ({
         calls: [record.call],
         name: record.name
-          .split(' ')
-          .map(
-            (word: string) =>
-              word[0].toUpperCase() + word.slice(1).toLowerCase()
-          )
-          .join(' ')
+          ? record.name
+              .trim()
+              .split(' ')
+              // Random whitespace :notlikethis:
+              .filter((word: string) => word.length)
+              .map((word: string) => {
+                if (typeof word[0] !== 'string') {
+                  console.log('this is a bad word!', record.name.split(' '))
+                }
+                return word[0].toUpperCase() + word.slice(1).toLowerCase()
+              })
+              .join(' ')
+          : 'Data Missing'
       }))
       // Collapse records with matching names into one with an array of callsigns
       .reduce((deDupedByCall, recordA) => {
         const existingRecord = deDupedByCall.find(
-          (e) => e.name === recordA.name
+          (e) => e.name === recordA.name && recordA.name !== 'Data Missing'
         )
         if (existingRecord) {
           existingRecord.calls = existingRecord.calls.concat(recordA.calls)
@@ -79,6 +101,10 @@ router.post('/', async (ctx: Koa.Context) => {
         }
         return deDupedByCall
       }, [])
+
+    // Add to state for logger to pull off
+    ctx.state.rowsReturned = result.rowCount
+    ctx.state.dbCommand = query
 
     response.status = 200
     response.set('Content-Type', 'application/json')

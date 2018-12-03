@@ -25,5 +25,5 @@ export const config = {
   buildType,
   logLevel: 4,
   port: buildType === BuildType.Production ? 7331 : 7337,
-  prettyPrint: true
+  prettyPrint: buildType === BuildType.Production ? false : true
 }

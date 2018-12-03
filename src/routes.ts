@@ -32,6 +32,12 @@ router.post('/', async (ctx: Koa.Context) => {
   const { response } = ctx
   const { zip } = body as PostBody
 
+  if (Number.isNaN(Number(zip))) {
+    ctx.status = 422
+    ctx.body = "Invalid zip; don't use + or -; example: 920563043"
+    return
+  }
+
   logger.debug('Got a post')
   const result = await queryDB(
     logger,
@@ -42,18 +48,15 @@ router.post('/', async (ctx: Koa.Context) => {
 
   if (result && result.rows) {
     const sortedRows = result.rows
+      // Sort by first two chars
       .sort((recordA, recordB) => {
-        // console.log(
-        //   recordA.name,
-        //   recordB.name,
-        //   recordA.name.charCodeAt(0) - recordB.name.charCodeAt(0)
-        // )
         const firstLetterComp =
           recordA.name.charCodeAt(0) - recordB.name.charCodeAt(0)
         return firstLetterComp === 0
           ? recordA.name.charCodeAt(1) - recordB.name.charCodeAt(1)
           : firstLetterComp
       })
+      // Title case names, transform single callsign into array of callsigns.
       .map((record) => ({
         calls: [record.call],
         name: record.name
@@ -64,6 +67,7 @@ router.post('/', async (ctx: Koa.Context) => {
           )
           .join(' ')
       }))
+      // Collapse records with matching names into one with an array of callsigns
       .reduce((deDupedByCall, recordA) => {
         const existingRecord = deDupedByCall.find(
           (e) => e.name === recordA.name

@@ -27,3 +27,5 @@ ORDER BY COUNT(name) DESC;
 
 SELECT call FROM hammers
 WHERE zip = 92056 OR zip > 920560000 AND zip < 920570000;
+
+pg_dump -C hams | bzip2 | ssh -p 5235 -i /home/phylo/new_code/undefined/ci/travis_ci_rsa  postgres@mosey.systems "bunzip2 | psql hams"

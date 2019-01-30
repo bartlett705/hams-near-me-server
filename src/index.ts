@@ -5,6 +5,7 @@ import bodyParser from 'koa-bodyparser'
 import { Client } from 'pg'
 import { RateLimiterMemory } from 'rate-limiter-flexible'
 import { BuildType, config } from './config'
+import { Discord } from './discord'
 import { Logger, requestLoggerMiddleware } from './logger'
 import { routes } from './routes'
 
@@ -12,6 +13,11 @@ const logger = new Logger(config.logLevel)
 const { PGHOST, PGPORT, PGDATABASE, PGUSER } = process.env
 logger.debug(`DB ${PGUSER}@${PGHOST}:${PGPORT}/${PGDATABASE}`)
 const dbClient = new Client()
+
+export const discord = new Discord(
+  'dtbYSvMVqUQxO2iNR90TQZ0wqUQO-fcfKGWPriBJepf2mdKecun8c5esrLegLWzILHTJ',
+  '540026980205330453'
+)
 
 dbClient.connect()
 

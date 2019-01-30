@@ -1,6 +1,7 @@
 import Koa from 'koa'
 import Router from 'koa-router'
 import { Client, QueryResult } from 'pg'
+import { discord } from '.'
 import { Logger } from './logger'
 
 interface Hammer {
@@ -115,6 +116,9 @@ router.post('/', async (ctx: Koa.Context) => {
     response.status = 200
     response.set('Content-Type', 'application/json')
     response.body = JSON.stringify(sortedRows)
+    discord.postMessage({
+      content: `Serviced a search for: ${zip} from ${ctx.request.ip}`
+    })
   } else {
     response.status = 500
     response.body = 'Something went wrong :/'

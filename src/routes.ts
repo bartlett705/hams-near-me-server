@@ -14,7 +14,7 @@ router.get('/', (ctx: Koa.Context) =>
 )
 
 router.get('/healthcheck', (ctx: Koa.Context) => {
-  ctx.status = 223
+  ctx.status = 200
   ctx.body = 'pongHi'
   return
 })
@@ -34,14 +34,18 @@ router.post('/', async (ctx: Koa.Context) => {
 
   if (Number.isNaN(Number(zip))) {
     ctx.status = 422
-    ctx.body = "Invalid zip; don't use + or -; example: 920563043"
+    response.body = JSON.stringify({
+      errMessage: "Invalid zip; don't use + or -; example: 920563043"
+    })
     return
   }
 
   if (Number(zip) === 0) {
     ctx.status = 422
-    ctx.body =
-      "Sorry, you can't search for ULS records with missing zips right now. Too many rows ☹"
+    response.body = JSON.stringify({
+      errMessage:
+        "Sorry, you can't search for ULS records with missing zips right now. Too many rows ☹"
+    })
     return
   }
 
@@ -52,7 +56,9 @@ router.post('/', async (ctx: Koa.Context) => {
   // paranoia?
   if (query.indexOf(';') < 78) {
     ctx.status = 422
-    ctx.body = 'Notsure if sql injection...'
+    response.body = JSON.stringify({
+      errMessage: 'Notsure if sql injection...'
+    })
     return
   }
   const result = await queryDB(logger, dbClient, query)

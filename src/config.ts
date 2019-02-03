@@ -24,7 +24,7 @@ const buildType = getBuildType(process.env)
 export const config = {
   buildType,
   discordToken: process.env.DISCORD_TOKEN,
-  logLevel: 4,
+  logLevel: buildType === BuildType.Production ? 0 : 4,
   port: buildType === BuildType.Production ? 7341 : 7343,
   prettyPrint: buildType === BuildType.Production ? false : true
 }

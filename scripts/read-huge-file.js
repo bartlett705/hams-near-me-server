@@ -1,5 +1,5 @@
 /**
- *
+ * Parse huge text files (in this case the ULS record format) and insert them into a psql database.
  * sources:
  *  - stackoverflow.com/questions/16010915/parsing-huge-logfiles-in-node-js-read-in-line-by-line
  **/
@@ -40,7 +40,7 @@ async function main() {
   var lineNr = 0
 
   var s = fs
-    .createReadStream('snip.dat.example')
+    .createReadStream('EN.dat')
     .pipe(es.split())
     .pipe(
       es
@@ -48,17 +48,19 @@ async function main() {
           s.pause()
           lineNr += 1
 
-          //   entries.push(process(line));
           const { callSign, fullName, addr1, addr2, addr3, zip } = parseRecord(
             line
           )
-          const query =
-            'INSERT INTO hammers(call, name, addr1, addr2, addr3, zip) VALUES ($1, $2, $3, $4, $5, $6)'
+          const query = `INSERT INTO hammers(call, name, addr1, addr2, addr3, zip) 
+                    VALUES ($1, $2, $3, $4, $5, $6) 
+                    ON CONFLICT (call) 
+                      DO UPDATE 
+                        SET name = EXCLUDED.name, addr1 = EXCLUDED.addr1, addr2 = EXCLUDED.addr2, addr3 = EXCLUDED.addr3, zip = EXCLUDED.zip`
           const params = [callSign, fullName, addr1, addr2, addr3, zip]
           try {
             await queryDB(client, query, params)
           } catch {}
-          logMemoryUsage(lineNr)
+          logMemoryUsage(lineNr, callSign, fullName)
           s.resume()
         })
         .on('error', function(err) {
@@ -84,8 +86,8 @@ async function queryDB(client, query, params) {
   })
 }
 
-function logMemoryUsage(lineNr) {
-  console.log('Processing Record: ', lineNr)
+function logMemoryUsage(lineNr, callSign, fullName) {
+  console.log('Processing Record: ', lineNr, callSign, fullName)
 }
 
 main()

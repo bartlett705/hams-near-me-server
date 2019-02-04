@@ -5,8 +5,9 @@
   "main": "main.js",
   "scripts": {
     "start": "forever --watch -m 5 -o ../hams-hear-me.test.log --append -c \"ts-node\" src/index.ts --colors",
-    "start:production": "BUILD_TYPE=prod forever --watch -m 5 -o ../hams-near-me.prod.log --append -c \"ts-node\" src/index.ts --colors",
-    "parse": "node scripts/read-huge-file.js"
+    "start:production": "npm i && BUILD_TYPE=prod forever --watch -m 5 -o ../hams-near-me.prod.log --append -c \"ts-node\" src/index.ts --colors",
+    "parse": "node scripts/read-huge-file.js",
+    "update-remote-db": "pg_dump -C hams | bzip2 | ssh -p 5235 -i /home/phylo/new_code/undefined/ci/travis_ci_rsa  postgres@mosey.systems \"bunzip2 | psql hams\""
   },
   "author": "kk6zkl",
   "license": "ISC",
@@ -38,6 +39,6 @@
     "jest": "latest",
     "rimraf": "^2.6.2",
     "tslint": "^5.11.0",
-    "typescript": "^3.1.1"
+    "typescript": "^3.2.2"
   }
 }

@@ -15,8 +15,12 @@ node_modules/
 .npm
 .env
 .tmp
+
+# ULS data
+update
 *.dat
 *.zip
+counts
 
 # Builds
 build

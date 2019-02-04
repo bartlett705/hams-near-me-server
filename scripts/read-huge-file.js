@@ -38,36 +38,50 @@ async function main() {
   //   );
 
   var lineNr = 0
+  const filename = process.argv[2]
+  if (!fs.existsSync(filename)) {
+    console.log(filename, ' not found; skipping.')
+    process.exit(0)
+  }
 
+  console.log('Parsing ', filename)
   var s = fs
-    .createReadStream('EN.dat')
+    .createReadStream(filename)
     .pipe(es.split())
     .pipe(
       es
         .mapSync(async function(line) {
           s.pause()
           lineNr += 1
-
-          const { callSign, fullName, addr1, addr2, addr3, zip } = parseRecord(
-            line
-          )
-          const query = `INSERT INTO hammers(call, name, addr1, addr2, addr3, zip) 
-                    VALUES ($1, $2, $3, $4, $5, $6) 
-                    ON CONFLICT (call) 
-                      DO UPDATE 
-                        SET name = EXCLUDED.name, addr1 = EXCLUDED.addr1, addr2 = EXCLUDED.addr2, addr3 = EXCLUDED.addr3, zip = EXCLUDED.zip`
-          const params = [callSign, fullName, addr1, addr2, addr3, zip]
-          try {
-            await queryDB(client, query, params)
-          } catch {}
-          logMemoryUsage(lineNr, callSign, fullName)
+          if (line) {
+            const {
+              callSign,
+              fullName,
+              addr1,
+              addr2,
+              addr3,
+              zip
+            } = parseRecord(line)
+            const query = `INSERT INTO hammers(call, name, addr1, addr2, addr3, zip) 
+              VALUES ($1, $2, $3, $4, $5, $6) 
+              ON CONFLICT (call) 
+              DO UPDATE 
+              SET name = EXCLUDED.name, addr1 = EXCLUDED.addr1, addr2 = EXCLUDED.addr2, addr3 = EXCLUDED.addr3, zip = EXCLUDED.zip`
+            const params = [callSign, fullName, addr1, addr2, addr3, zip]
+            try {
+              await queryDB(client, query, params)
+            } catch {}
+            logMemoryUsage(lineNr, callSign, fullName)
+          } else {
+            console.log('Skipping blank record.')
+          }
           s.resume()
         })
         .on('error', function(err) {
           console.log('Error while reading file.', err)
         })
         .on('end', async function() {
-          console.log(chalk.green('Read entire file.'))
+          console.log(chalk.green('Read entire file. Total Records: ', lineNr))
           console.log(chalk.blue('Ending client sesh'))
           await client.end()
         })
@@ -87,7 +101,9 @@ async function queryDB(client, query, params) {
 }
 
 function logMemoryUsage(lineNr, callSign, fullName) {
+  // if (lineNr % 1000 === 0) {
   console.log('Processing Record: ', lineNr, callSign, fullName)
+  // }
 }
 
 main()

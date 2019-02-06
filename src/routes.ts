@@ -117,7 +117,9 @@ router.post('/', async (ctx: Koa.Context) => {
     response.set('Content-Type', 'application/json')
     response.body = JSON.stringify(sortedRows)
     discord.postMessage({
-      content: `Serviced a search for: ${zip} from ${ctx.request.ip}`
+      content: `Serviced a search for: ${zip} from ${
+        ctx.request.ips.length ? ctx.request.ips : ctx.request.ip
+      }`
     })
   } else {
     response.status = 500

@@ -22,6 +22,7 @@ export const discord = new Discord(
 dbClient.connect()
 
 const app = new Koa()
+app.proxy = true
 
 const rateLimiterOpts = {
   duration: 10, // Time to reset
@@ -39,7 +40,9 @@ app.use(
 
 app.use(async (ctx, next) => {
   try {
-    await rateLimiter.consume(ctx.ip)
+    await rateLimiter.consume(
+      ctx.request.ips.length ? JSON.stringify(ctx.request.ips) : ctx.request.ip
+    )
     await next()
   } catch (rejRes) {
     ctx.status = 429

@@ -8,13 +8,13 @@ interface LogData {
   dbCommand: string
   errorMessage: string
   errorStack: string
-  host: string
   zip: string
   method: string
   remoteAddress: string | string[]
   responseTime: number
   rowsReturned: number
   statusCode: number
+  time: string
   url: string
   userAgent: string
 }
@@ -34,9 +34,7 @@ export class Logger {
   public debug: (...args: any) => void
   public externalCall: (...args: any) => void
 
-  private logLevel: number
   constructor(logLevel: number) {
-    this.logLevel = logLevel
     this.error = (...args: any) => console.log(error(...args))
     this.warn =
       logLevel > 0 ? (...args: any) => console.log(warn(...args)) : noOp
@@ -59,6 +57,7 @@ export const requestLoggerMiddleware = (
   const logData: Partial<LogData> = {
     method: ctx.method,
     remoteAddress: ctx.request.ips.length ? ctx.request.ips : ctx.request.ip,
+    time: new Date().toISOString(),
     url: ctx.url,
     userAgent: ctx.headers['user-agent'],
     zip:

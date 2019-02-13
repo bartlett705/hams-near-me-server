@@ -135,15 +135,15 @@ async function queryDB(
 ) {
   return new Promise<QueryResult | null>(async (res, _) => {
     try {
-      console.info('QUERY:', query)
+      logger.debug('QUERY:', query)
       const result = await client.query(query, params)
       if (result.rows) {
-        console.info(`Returing ${result.rows.length} rows`)
+        logger.debug(`Returing ${result.rows.length} rows`)
       }
       res(result)
     } catch (err) {
-      console.error('hrm')
-      console.error(logger.error(err))
+      logger.error('DB Error')
+      logger.error(logger.error(err))
       res(null)
     }
   })

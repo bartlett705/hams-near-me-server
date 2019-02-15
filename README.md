@@ -16,7 +16,7 @@ Serves the data gathered by the script below on a KOA endpoint that accepts a PO
 ## Instructions for use
 
 1. Download and unzip some `.dat` files from [ULS](https://fcc.gov).
-2. Enter the name of the `EN.dat` file you wish to parse into `read-huge-file.js`.
+2. Enter the path of the `EN.dat` file you wish to parse into `read-huge-file.js`.
 3. `node scripts/read-huge-file`.
 4. Wait a bit(!!!)
 5. `npm start` to load the server on local port 7337. You should now be able to `npm start` in the client project as well and connect to `localhost:8080` to see it all working.
